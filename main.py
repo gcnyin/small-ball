@@ -1,6 +1,4 @@
 import tkinter as tk
-import threading
-import time
 import random
 import math
 
@@ -22,33 +20,35 @@ canvas.create_oval(circle_x - circle_radius, circle_y - circle_radius,
 
 # 小球参数
 ball_radius = 10
+num_balls = 10  # 小球数量
 
 # 随机初始化小球位置（确保在圆形内）
 def random_position():
-    while True:
-        angle = random.uniform(0, 2 * math.pi)  # 随机角度
-        distance = random.uniform(0, circle_radius - ball_radius)  # 随机距离
-        x = circle_x + distance * math.cos(angle)
-        y = circle_y + distance * math.sin(angle)
-        return x, y
+    angle = random.uniform(0, 2 * math.pi)  # 随机角度
+    distance = random.uniform(0, circle_radius - ball_radius)  # 随机距离
+    x = circle_x + distance * math.cos(angle)
+    y = circle_y + distance * math.sin(angle)
+    return x, y
 
-ball_x, ball_y = random_position()
-ball = canvas.create_oval(
-    ball_x - ball_radius, ball_y - ball_radius,
-    ball_x + ball_radius, ball_y + ball_radius,
-    fill="red"
-)
+# 创建小球字典
+balls = {}
+for _ in range(num_balls):
+    ball_x, ball_y = random_position()
+    ball = canvas.create_oval(
+        ball_x - ball_radius, ball_y - ball_radius,
+        ball_x + ball_radius, ball_y + ball_radius,
+        fill="red"
+    )
+    # 随机初始化小球速度（确保方向随机）
+    speed = 2  # 速度大小
+    angle = random.uniform(0, 2 * math.pi)  # 随机角度
+    dx = speed * math.cos(angle)
+    dy = speed * math.sin(angle)
+    balls[ball] = (dx, dy)
 
-# 随机初始化小球速度（确保方向随机）
-speed = 2  # 速度大小
-angle = random.uniform(0, 2 * math.pi)  # 随机角度
-dx = speed * math.cos(angle)
-dy = speed * math.sin(angle)
-
-# 动画函数
+# 动画更新函数
 def animate():
-    global dx, dy  # 声明 dx 和 dy 为全局变量
-    while True:
+    for ball, (dx, dy) in balls.items():
         # 移动小球
         canvas.move(ball, dx, dy)
         # 获取小球的位置
@@ -86,15 +86,14 @@ def animate():
             dx = dx - 2 * dot_product * normal_x
             dy = dy - 2 * dot_product * normal_y
         
-        # 更新画布
-        canvas.update()
-        # 控制动画速度
-        time.sleep(0.01)
+        # 更新小球的速度
+        balls[ball] = (dx, dy)
+    
+    # 递归调用自己，实现动画效果
+    root.after(10, animate)
 
 # 启动动画
-animate_thread = threading.Thread(target=animate)
-animate_thread.daemon = True
-animate_thread.start()
+animate()
 
 # 运行主循环
 root.mainloop()
